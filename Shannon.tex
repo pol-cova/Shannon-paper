@@ -1,0 +1,65 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{xcolor}
+\usepackage{amsmath, amssymb}
+\usepackage{parskip}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{listings}
+\geometry{top=1in, bottom=1in, left=1in, right=1in}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={Práctica 2 - Comunicación Serial UART con PIC18F46K22},
+    pdfpagemode=FullScreen,
+}
+
+\lstset{
+    language=C,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{magenta},
+    commentstyle=\color{teal},
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny\color{gray}
+}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \includegraphics[width=0.25\textwidth]{./images/logo.png} \\[1.5cm]
+    {\LARGE Universidad de Guadalajara} \\[0.5cm]
+    {\Large Centro Universitario de los Valles} \\[0.5cm]
+    {\large Ingeniería en Electrónica y Computación} \\[2cm]
+    {\Large Shannon: Compresor de Rango Dinámico con Predicción Automática de Parámetros}\\[2.5cm]
+    \begin{flushleft}
+    \large
+    \textbf{Autores:} Paul Emanuel Contreras Covarrubias,
+                      Alexis Moises Torres Martínez,
+                      Victor Manuel García Esquivel \\[0.5cm]
+    \textbf{Correo:} \href{mailto:paul.contreras6403@alumnos.udg.mx}
+                         {paul.contreras6403@alumnos.udg.mx} \\[2cm]
+    \textbf{Profesor:} Dra. Teresa Efigenia Alarcón Martínez \\
+    \textbf{Materia:}  Análisis de Señales y Sistemas --- 187670 \\
+    \end{flushleft}
+    \vfill
+    {\large \today}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\end{document}
