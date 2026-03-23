@@ -1,65 +1,142 @@
 \documentclass[a4paper,12pt]{article}
-\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage{graphicx}
+\usepackage[spanish,es-noshorthands]{babel}
 \usepackage{geometry}
+\geometry{top=1in, bottom=1in, left=1in, right=1in}
 \usepackage{setspace}
-\usepackage{xcolor}
-\usepackage{amsmath, amssymb}
 \usepackage{parskip}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
 \usepackage{float}
 \usepackage{caption}
 \usepackage{booktabs}
+\usepackage{xcolor}
+\definecolor{udgblue}{HTML}{003865}    
+\definecolor{codebg}{HTML}{F5F5F5}
 \usepackage{hyperref}
-\usepackage{listings}
-\geometry{top=1in, bottom=1in, left=1in, right=1in}
 \hypersetup{
-    colorlinks=true,
-    linkcolor=blue,
-    filecolor=magenta,
-    urlcolor=cyan,
-    pdftitle={Práctica 2 - Comunicación Serial UART con PIC18F46K22},
-    pdfpagemode=FullScreen,
+    colorlinks  = true,
+    linkcolor   = udgblue,
+    filecolor   = magenta,
+    urlcolor    = cyan,
+    citecolor   = udgblue,
+    pdftitle    = {Shannon: Compresor de Rango Dinámico con
+                   Predicción Automática de Parámetros},
+    pdfauthor   = {Contreras Covarrubias, Torres Martínez,
+                   Oliva Ramírez},
+    pdfsubject  = {Análisis de Señales y Sistemas},
+    pdfkeywords = {dynamic range compression, LLM, chain-of-thought,
+                   Core ML, DSP, XAI, Apple Silicon, MLX},
+    pdfpagemode = UseOutlines,
+}
+
+\usepackage{listings}
+
+\lstdefinelanguage{Swift}{
+    keywords    = {func, let, var, if, else, guard, return, class,
+                   struct, enum, protocol, import, true, false, nil,
+                   for, in, while, do, switch, case, break, continue,
+                   throw, try, catch, async, await, actor, some, any},
+    keywordstyle    = \color{blue}\bfseries,
+    stringstyle     = \color{magenta},
+    commentstyle    = \color{teal}\itshape,
+    morestring      = [b]",
+    morecomment     = [l]{//},
+    morecomment     = [s]{/*}{*/},
+    sensitive       = true,
 }
 
 \lstset{
-    language=C,
-    basicstyle=\ttfamily\small,
-    keywordstyle=\color{blue}\bfseries,
-    stringstyle=\color{magenta},
-    commentstyle=\color{teal},
-    backgroundcolor=\color{gray!10},
-    frame=single,
-    breaklines=true,
-    showstringspaces=false,
-    numbers=left,
-    numberstyle=\tiny\color{gray}
+    basicstyle       = \ttfamily\small,
+    backgroundcolor  = \color{codebg},
+    frame            = single,
+    rulecolor        = \color{gray!40},
+    breaklines       = true,
+    showstringspaces = false,
+    numbers          = left,
+    numberstyle      = \tiny\color{gray},
+    tabsize          = 4,
+    captionpos       = b,
 }
 
-\begin{document}
+\makeatletter
+\renewenvironment{abstract}{%
+    \if@twocolumn
+        \section*{\normalfont\bfseries\large\abstractname}%
+    \else
+        \begin{center}%
+            {\normalfont\bfseries\large\abstractname\vspace{-.5em}\vspace{\z@}}%
+        \end{center}%
+        \small
+        \quotation
+    \fi
+}{%
+    \if@twocolumn\else\endquotation\fi
+}
+\makeatother
 
+\begin{document}
+\hypersetup{pageanchor=false}
+\onehalfspacing
 \begin{titlepage}
     \centering
-    \includegraphics[width=0.25\textwidth]{./images/logo.png} \\[1.5cm]
-    {\LARGE Universidad de Guadalajara} \\[0.5cm]
-    {\Large Centro Universitario de los Valles} \\[0.5cm]
-    {\large Ingeniería en Electrónica y Computación} \\[2cm]
-    {\Large Shannon: Compresor de Rango Dinámico con Predicción Automática de Parámetros}\\[2.5cm]
+    \includegraphics[width=0.25\textwidth]{./images/logo.png}\\[1.5cm]
+    {\LARGE Universidad de Guadalajara}\\[0.5cm]
+    {\Large Centro Universitario de los Valles}\\[0.5cm]
+    {\large Ingeniería en Electrónica y Computación}\\[2.5cm]
+    {\LARGE\bfseries Shannon}\\[0.4cm]
+    {\large Compresor de Rango Dinámico con\\[0.2cm]
+            Predicción Automática de Parámetros}\\[3cm]
     \begin{flushleft}
-    \large
-    \textbf{Autores:} Paul Emanuel Contreras Covarrubias,
-                      Alexis Moises Torres Martínez,
-                      Victor Manuel García Esquivel \\[0.5cm]
-    \textbf{Correo:} \href{mailto:paul.contreras6403@alumnos.udg.mx}
-                         {paul.contreras6403@alumnos.udg.mx} \\[2cm]
-    \textbf{Profesor:} Dra. Teresa Efigenia Alarcón Martínez \\
-    \textbf{Materia:}  Análisis de Señales y Sistemas --- 187670 \\
+        \large
+        \textbf{Autores:}
+            Paul Emanuel Contreras Covarrubias \\
+            \hspace*{4.5em} Alexis Moises Torres Martínez \\
+            \hspace*{4.5em} Angel Rafel Oliva Ramírez \\[0.5cm]
+        \textbf{Correo:}
+            \href{mailto:paul.contreras6403@alumnos.udg.mx}
+                 {paul.contreras6403@alumnos.udg.mx}\\[2cm]
+        \textbf{Profesor:} Dra.\ Teresa Efigenia Alarcón Martínez \\
+        \textbf{Materia:}  Análisis de Señales y Sistemas --- 187670 \\
     \end{flushleft}
     \vfill
     {\large \today}
 \end{titlepage}
+\hypersetup{pageanchor=true}
 
 \tableofcontents
+\newpage
+
+\begin{abstract}
+El control del rango dinámico es una etapa fundamental en la
+producción y postproducción de audio digital. Las herramientas
+existentes presentan una dicotomía clara: los servicios en la nube
+ofrecen simplicidad operativa pero procesan la señal como una caja
+negra sin retroalimentación visible al usuario, mientras que las
+estaciones de trabajo de audio digital (DAW) exponen el proceso
+completo pero imponen una curva de aprendizaje elevada y costos de
+licencia prohibitivos. En este trabajo se propone \textbf{Shannon},
+un compresor de rango dinámico nativo que integra un
+motor DSP transparente con un \textit{Auto Mode} basado en
+razonamiento explícito. El \textit{Auto Mode} opera en dos etapas:
+un modelo de lenguaje de gran escala (LLM) con capacidad de cadena
+de pensamiento (\textit{chain-of-thought}) analiza las
+características espectrales y dinámicas de la señal de entrada y
+produce simultáneamente una traza de razonamiento legible por el
+usuario y una propuesta inicial de parámetros de compresión;
+dicha propuesta es refinada por un modelo de regresión ligero
+ejecutado localmente mediante Core~ML\@. La inferencia local se
+ejecuta mediante MLX y Foundation~Models sobre modelos cuantizados
+de gran escala; en dispositivos que no satisfacen los requisitos
+mínimos, el sistema conmuta automáticamente hacia un proveedor
+externo mediante una capa de abstracción uniforme. La cadena de
+pensamiento (\textit{chain-of-thought}) del LLM se expone como
+artefacto estructurado, inspeccionable y corregible por el usuario,
+extendiendo el modelo de IA explicable~(XAI) al dominio del
+procesamiento dinámico de audio.
+\end{abstract}
+
 \newpage
 
 \end{document}
