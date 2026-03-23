@@ -12,3 +12,6 @@
 *.blg
 *.bcf
 *.run.xml
+
+# ignore reference by now
+REFERENCES.md

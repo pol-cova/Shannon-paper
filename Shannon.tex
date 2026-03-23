@@ -12,9 +12,10 @@
 \usepackage{caption}
 \usepackage{booktabs}
 \usepackage{xcolor}
-\definecolor{udgblue}{HTML}{003865}    
+\definecolor{udgblue}{HTML}{003865}
 \definecolor{codebg}{HTML}{F5F5F5}
-\usepackage{hyperref}
+
+\usepackage[breaklinks=true]{hyperref}
 \hypersetup{
     colorlinks  = true,
     linkcolor   = udgblue,
@@ -30,6 +31,7 @@
                    Core ML, DSP, XAI, Apple Silicon, MLX},
     pdfpagemode = UseOutlines,
 }
+\urlstyle{same}
 
 \usepackage{listings}
 
@@ -60,25 +62,7 @@
     captionpos       = b,
 }
 
-\makeatletter
-\renewenvironment{abstract}{%
-    \if@twocolumn
-        \section*{\normalfont\bfseries\large\abstractname}%
-    \else
-        \begin{center}%
-            {\normalfont\bfseries\large\abstractname\vspace{-.5em}\vspace{\z@}}%
-        \end{center}%
-        \small
-        \quotation
-    \fi
-}{%
-    \if@twocolumn\else\endquotation\fi
-}
-\makeatother
-
 \begin{document}
-\hypersetup{pageanchor=false}
-\onehalfspacing
 \begin{titlepage}
     \centering
     \includegraphics[width=0.25\textwidth]{./images/logo.png}\\[1.5cm]
@@ -87,7 +71,7 @@
     {\large Ingeniería en Electrónica y Computación}\\[2.5cm]
     {\LARGE\bfseries Shannon}\\[0.4cm]
     {\large Compresor de Rango Dinámico con\\[0.2cm]
-            Predicción Automática de Parámetros}\\[2.5cm]
+            Predicción Automática de Parámetros}\\[3cm]
     \begin{flushleft}
         \large
         \textbf{Autores:}
@@ -96,47 +80,218 @@
             \hspace*{4.5em} Angel Rafel Oliva Ramírez \\[0.5cm]
         \textbf{Correo:}
             \href{mailto:paul.contreras6403@alumnos.udg.mx}
-                 {paul.contreras6403@alumnos.udg.mx}\\[1cm]
+                 {paul.contreras6403@alumnos.udg.mx}\\[2cm]
         \textbf{Profesor:} Dra.\ Teresa Efigenia Alarcón Martínez \\
         \textbf{Materia:}  Análisis de Señales y Sistemas --- 187670 \\
     \end{flushleft}
     \vfill
     {\large \today}
 \end{titlepage}
-\hypersetup{pageanchor=true}
 
 \tableofcontents
 \newpage
 
 \begin{abstract}
-El control del rango dinámico es una etapa fundamental en la
-producción y postproducción de audio digital. Las herramientas
-existentes presentan una dicotomía clara: los servicios en la nube
-ofrecen simplicidad operativa pero procesan la señal como una caja
-negra sin retroalimentación visible al usuario, mientras que las
-estaciones de trabajo de audio digital (DAW) exponen el proceso
-completo pero imponen una curva de aprendizaje elevada y costos de
-licencia prohibitivos. En este trabajo se propone \textbf{Shannon},
-un compresor de rango dinámico nativo que integra un
-motor DSP transparente con un \textit{Auto Mode} basado en
-razonamiento explícito. El \textit{Auto Mode} opera en dos etapas:
-un modelo de lenguaje de gran escala (LLM) con capacidad de cadena
-de pensamiento (\textit{chain-of-thought}) analiza las
-características espectrales y dinámicas de la señal de entrada y
-produce simultáneamente una traza de razonamiento legible por el
-usuario y una propuesta inicial de parámetros de compresión;
-dicha propuesta es refinada por un modelo de regresión ligero
-ejecutado localmente mediante Core~ML\@. La inferencia local se
-ejecuta mediante MLX y Foundation~Models sobre modelos cuantizados
-de gran escala; en dispositivos que no satisfacen los requisitos
-mínimos, el sistema conmuta automáticamente hacia un proveedor
-externo mediante una capa de abstracción uniforme. La cadena de
-pensamiento (\textit{chain-of-thought}) del LLM se expone como
-artefacto estructurado, inspeccionable y corregible por el usuario,
-extendiendo el modelo de IA explicable~(XAI) al dominio del
+El control del rango dinámico es una etapa crítica en la producción de audio digital:
+sin él, las diferencias de volumen entre las partes más silenciosas y más intensas
+de una grabación pueden superar los 60~dB, nivel inaceptable para plataformas de
+distribución como Spotify o Apple Podcasts, que operan bajo el estándar
+EBU~R128~\cite{ebu_r128}.
+
+Las herramientas actuales enfrentan una dicotomía irresuelta: los servicios en la
+nube automatizan el proceso pero lo tratan como una caja negra, sin exponer ninguna
+justificación al usuario; las estaciones de trabajo de audio digital (DAW)
+profesionales ofrecen control total pero exigen una curva de aprendizaje elevada y
+costos de licencia prohibitivos para productores independientes y estudiantes.
+El espacio entre ambos extremos (herramientas accesibles con razonamiento
+transparente) permanece desatendido en el ecosistema de productos disponibles.
+
+Este trabajo propone \textbf{Shannon}, un compresor de rango dinámico nativo que
+integra un motor DSP de alto rendimiento con un \textit{Auto Mode} capaz de razonar
+explícitamente sobre las características de la señal de entrada.
+El \textit{Auto Mode} combina un modelo de lenguaje de gran escala (LLM) que
+genera, en lenguaje natural, una traza de razonamiento auditable sobre las
+decisiones de compresión, con un modelo de regresión ligero ejecutado localmente
+que refina numéricamente los parámetros propuestos.
+La contribución central del trabajo es la exposición de dicha traza de razonamiento
+como artefacto estructurado, inspeccionable y corregible por el usuario,
+extendiendo el modelo de inteligencia artificial explicable~(XAI) al dominio del
 procesamiento dinámico de audio.
 \end{abstract}
 
 \newpage
+
+\section{Introducción}
+\label{sec:introduccion}
+
+La dinámica de una señal de audio (la relación entre sus niveles más silenciosos y
+más intensos) es uno de los parámetros perceptuales más relevantes en la producción
+sonora moderna. En grabaciones musicales, podcasts y contenido multimedia, el rango
+dinámico puede superar los 60~dB, un margen que los sistemas de reproducción
+domésticos y los estándares de distribución en plataformas digitales no están
+diseñados para absorber sin distorsión o pérdida de inteligibilidad. El compresor
+de rango dinámico (\textit{Dynamic Range Compressor}, DRC) es el procesador de
+señal encargado de reducir dicha variación de forma controlada, preservando la
+naturalidad del contenido sonoro mientras garantiza su conformidad con los niveles
+de referencia exigidos por plataformas como Apple Podcasts, Spotify y YouTube,
+las cuales adoptan el estándar EBU~R128~\cite{ebu_r128} con objetivos de intensidad
+integrada entre $-23$ y $-14$~LUFS.
+
+Sin embargo, el acceso a estas herramientas enfrenta una brecha significativa:
+los productores independientes y creadores de contenido deben elegir entre
+servicios en la nube que automatizan la compresión como una caja negra (sin
+retroalimentación visible ni justificación de las decisiones aplicadas) y
+estaciones de trabajo de audio digital (DAW) profesionales que exponen el proceso
+completo pero imponen curvas de aprendizaje elevadas y costos de licencia
+prohibitivos. Esta brecha entre accesibilidad y transparencia permanece desatendida
+tanto en la literatura académica como en el ecosistema de productos disponibles,
+y constituye la motivación central del presente trabajo.
+
+Desde la formalización matemática del DRC digital propuesta por Giannoulis, Massberg
+y Reiss~\cite{giannoulis2012}, el diseño de estos sistemas ha evolucionado de manera
+significativa. La caracterización precisa de las constantes de tiempo de ataque y
+relajación~\cite{floru1999} permitió modelar con exactitud el comportamiento
+transitorio de los compresores analógicos clásicos. Más recientemente, la emergencia
+del aprendizaje automático abrió una línea de investigación orientada a la predicción
+automática de parámetros: Ramos-Vidal et al.~\cite{ramos2017} propusieron un modelo
+de regresión que estima los parámetros óptimos de compresión a partir de las
+características de un audio de referencia, mientras que SignalTrain~\cite{signaltrain2019}
+extendió este enfoque mediante redes neuronales profundas capaces de emular el
+comportamiento dinámico completo de compresores analógicos.
+
+No obstante, estos enfoques comparten una limitación fundamental: tratan la
+predicción de parámetros como un problema de regresión pura, omitiendo la dimensión
+semántica del razonamiento que un ingeniero de audio experto aplica al configurar un
+compresor. Un ingeniero experimentado no solo ajusta números: analiza el contenido,
+infiere la intención del material sonoro y justifica cada decisión en función del
+contexto de producción. Ningún modelo de regresión existente captura ni expone ese
+razonamiento al usuario. La incorporación de modelos de lenguaje de gran escala con
+capacidad de cadena de pensamiento (\textit{chain-of-thought}) abre la posibilidad
+de cerrar precisamente esta brecha.
+
+En este trabajo se propone \textbf{Shannon}\footnote{El nombre rinde homenaje a
+Claude E.\ Shannon, padre de la teoría matemática de la comunicación~\cite{shannon1948},
+cuyo trabajo sobre información y entropía es fundamento de las telecomunicaciones
+y el procesamiento digital de señales.}, un compresor de rango dinámico nativo
+que aborda esta brecha mediante la integración de un motor DSP transparente con un
+\textit{Auto Mode} basado en razonamiento generado por un LLM. Las contribuciones
+principales del presente trabajo son las siguientes:
+
+\begin{enumerate}
+    \item Un motor DSP de arquitectura \textit{feedforward} con detección de nivel
+          RMS, filtro de balísticas, computador de ganancia con curva de rodilla
+          suave (\textit{soft-knee}), buffer de anticipación (\textit{lookahead}),
+          ganancia de compensación y medición de intensidad sonora conforme al
+          estándar EBU~R128.
+
+    \item Un \textit{Auto Mode} en dos etapas: un LLM con capacidad de
+          \textit{chain-of-thought} analiza las características espectrales y
+          dinámicas de la señal y produce simultáneamente una traza de razonamiento
+          estructurada y legible, y una propuesta inicial de parámetros de
+          compresión; dicha propuesta es refinada por un modelo de regresión
+          ligero ejecutado localmente.
+
+    \item La exposición del \textit{chain-of-thought} del LLM como artefacto
+          estructurado, inspeccionable y corregible por el usuario, extendiendo
+          el modelo de inteligencia artificial explicable~(XAI) al dominio del
+          procesamiento dinámico de audio.
+\end{enumerate}
+
+Para verificar la viabilidad de estas contribuciones se diseñaron tres experimentos,
+cada uno orientado a validar un componente independiente del sistema:
+
+\begin{enumerate}
+    \item \textbf{Validación del motor DSP:} medición de la reducción de ganancia
+          frente a valores teóricos para distintos tipos de señal de audio.
+
+    \item \textbf{Evaluación del \textit{Auto Mode} con LLM:} comparación de los
+          parámetros generados por el LLM con configuraciones establecidas por
+          referencia experta.
+
+    \item \textbf{Evaluación del \textit{pipeline} completo} (experimento de mayor
+          relevancia del presente trabajo): cuantificación de la mejora que aporta
+          el modelo de regresión sobre los parámetros propuestos por el LLM
+          en solitario.
+\end{enumerate}
+
+\section{Objetivo}
+\label{sec:objetivo}
+
+\subsection*{Objetivo general}
+
+Diseñar y proponer la arquitectura de \textbf{Shannon}, un compresor de rango
+dinámico nativo que integra un motor DSP de alto rendimiento con un
+\textit{Auto Mode} basado en razonamiento explícito mediante modelos de lenguaje
+de gran escala, demostrando que la incorporación del \textit{chain-of-thought}
+como artefacto auditable extiende el modelo de IA explicable~(XAI) al dominio del
+procesamiento dinámico de audio.
+
+\subsection*{Objetivos específicos}
+
+\begin{enumerate}
+    \item Implementar y validar un motor DSP \textit{feedforward} que reduzca el
+          rango dinámico de señales de audio de acuerdo con valores teóricos de
+          referencia.
+
+    \item Evaluar la capacidad del LLM para proponer parámetros de compresión
+          coherentes con configuraciones establecidas por referencia experta.
+
+    \item Cuantificar la mejora que aporta el modelo de regresión local
+          sobre la propuesta inicial del LLM en el \textit{pipeline} completo de
+          dos etapas.
+\end{enumerate}
+
+\begin{thebibliography}{9}
+
+\bibitem{giannoulis2012}
+D.~Giannoulis, M.~Massberg y J.~D.~Reiss,
+``Digital dynamic range compressor design --- a tutorial and analysis,''
+\textit{Journal of the Audio Engineering Society},
+vol.~60, no.~6, pp.~399--408, 2012.
+Disponible en:
+\url{https://www.eecs.qmul.ac.uk/~josh/documents/2012/GiannoulisMassbergReiss-dynamicrangecompression-JAES2012.pdf}
+
+\bibitem{floru1999}
+F.~Floru,
+``Attack and release time constants in RMS-based feedback compressors,''
+\textit{Journal of the Audio Engineering Society},
+vol.~47, no.~10, pp.~788--804, 1999.
+Disponible en:
+\url{https://www.thatcorp.com/datashts/AES4703_Attack_and_Release_Time_Constants_I.pdf}
+
+\bibitem{ramos2017}
+J.~Ramos-Vidal, J.~Janer y X.~Serra,
+``Automatic control of the dynamic range compressor using a regression model
+and a reference sound,''
+en \textit{Proc. 20th Int. Conf. Digital Audio Effects (DAFx-17)},
+Edinburgh, UK, 2017, pp.~1--7.
+Disponible en:
+\url{https://dafx17.eca.ed.ac.uk/papers/DAFx17_paper_44.pdf}
+
+\bibitem{signaltrain2019}
+J.~C.~Comunità, C.~Steinmetz y J.~D.~Reiss,
+``SignalTrain: Profiling audio compressors with deep neural networks,''
+en \textit{Proc. IEEE Int. Conf. Acoustics, Speech and Signal Processing
+(ICASSP)}, Brighton, UK, 2019.
+Disponible en:
+\url{https://arxiv.org/abs/1905.11928}
+
+\bibitem{shannon1948}
+C.~E.~Shannon,
+``A mathematical theory of communication,''
+\textit{Bell System Technical Journal},
+vol.~27, no.~3, pp.~379--423, 1948.
+Disponible en:
+\url{https://people.math.harvard.edu/~ctm/home/text/others/shannon/entropy/entropy.pdf}
+
+\bibitem{ebu_r128}
+European Broadcasting Union,
+\textit{EBU R~128 --- Loudness Normalisation and Permitted Maximum
+Level of Audio Signals},
+EBU, Geneva, 2020.
+Disponible en:
+\url{https://tech.ebu.ch/docs/r/r128.pdf}
+
+\end{thebibliography}
 
 \end{document}
